@@ -1,1395 +1,223 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <title>Main Page</title>
+<meta charset="UTF-8">
+<title>Video Game Recommendations</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* ===== Search Bar ===== */
+#searchBar {
+    display: block;
+    margin: 0 auto 20px auto;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    border: 2px solid black;
+    box-sizing: border-box;
+}
 
-    <style>
-        body {
-            margin: 0;
-            padding: 15px;
-            font-family: "Comic Sans MS", sans-serif;
-            background-image: url("waves.jpg");
-            background-repeat: repeat;
-        }
+/* ===== Game Cards ===== */
+.game {
+    border: 1px solid black;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 15px;
+    background-color: white;
+}
 
-        nav {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+/* ===== Admin Buttons ===== */
+.game button {
+    margin-top: 8px;
+    margin-right: 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 5px 10px;
+    font-size: 13px;
+    border: 2px solid black;
+    background-color: white;
+}
+.game button:hover {
+    background-color: #eee;
+}
 
-        .container {
-            max-width: 700px;
-            margin: 0 auto;
-            background-color: rgb(255, 255, 255);
-            padding: 35px;
-            border-radius: 20px;
-            border-color: black;
-            border-width: 2px;
-            border-style: solid;
-        }
+/* ===== Admin Panel ===== */
+#adminPanel {
+    max-width: 700px;
+    margin: 20px auto;
+    background-color: white;
+    padding: 25px;
+    border-radius: 20px;
+    border: 2px solid black;
+    box-sizing: border-box;
+}
 
-        h1, h2, h3 {
-            margin-top: 0;
-        }
-
-        p {
-            line-height: 1.6;
-        }
-
-        img {
-            display: block;
-            margin: 20px 0;
-            border-radius: 20px;
-        }
-
-        button {
-            padding: 10px 16px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 10px;
-        }
-
-        /* Center the search bar */
-        .search-wrapper {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        #searchBar {
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 10px;
-            width: 300px;
-            border: 2px solid black;
-        }
-    </style>
+/* ===== Admin Panel Input Boxes ===== */
+#adminPanel input, #adminPanel textarea, #adminPanel button {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid gray;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+</style>
 </head>
-
 <body>
 
-    <nav>
-        <a href="index.html"><button>Main Page</button></a>
-        <a href="Blog.html"><button>Blog</button></a>
-        <a href="vgr.html"><button>Video Game Recommendations</button></a>
-    </nav>
+<nav>
+    <a href="index.html"><button>Main Page</button></a>
+    <a href="Blog.html"><button>Blog</button></a>
+    <a href="vgr.html"><button>Video Game Recommendations</button></a>
+</nav>
 
-    <!-- Centered Search Bar -->
-    <div class="search-wrapper">
-        <input type="text" id="searchBar" placeholder="Search games..." onkeyup="filterGames()">
+<div class="container">
+    <h2>Video Game Recommendations</h2>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" style="display:none;">
+        <h3>Admin Panel - Add New Game</h3>
+        <input type="text" id="gameTitle" placeholder="Game Title">
+        <textarea id="gameDescription" placeholder="Description"></textarea>
+        <input type="text" id="gamePrice" placeholder="Price">
+        <input type="text" id="gameGenre" placeholder="Genre">
+        <input type="text" id="gamePlatform" placeholder="Platform(s)">
+        <input type="text" id="gameRating" placeholder="Rating">
+        <button onclick="addGame()">Add Game</button>
+        <hr>
     </div>
 
-    <div class="container">
+    <!-- Search Bar -->
+    <input type="text" id="searchBar" placeholder="Search games..." onkeyup="filterGames()">
 
-        <header>
-            <h2><center>~Video Game Recommendations~</center></h2>
-        </header>
+    <!-- Games List -->
+    <div id="games"></div>
+</div>
 
-        <article>
+<script>
+// ----- Admin Login -----
+let isAdmin = false;
+function askAdminLogin() {
+    const pass = prompt("Enter admin password for editing privileges:");
+    if(pass === "203118") {
+        isAdmin = true;
+        document.getElementById("adminPanel").style.display = "block";
+        alert("Admin privileges granted!");
+    } else {
+        alert("Reverting to guest mode. You can view games only.");
+    }
+}
+askAdminLogin();
 
-            
-            <div class="game">
-                <h3>No Man's Sky</h3>
-                <p>Amazing exploration game with a vast universe to discover. ~18 quintillion planets! *Fair Warning:
-                    May run badly on older systems.*</p>
-                <p>Price: Can be found on sale for ~$20, usually $60</p>
-                <p>Genre: Exploration, Survival, Sci-Fi</p>
-                <p>Platform: PC, PS4, PS5, Xbox One, Xbox Series X/S</p>
-                <p>rating: 8/10, slight hiccups, 25-ish FPS but I have a potato laptop.</p>
-                <img src="" alt="">
-            </div>
+// ----- Preloaded Games -----
+const defaultGames = [
+    {id:'1', title:"No Man's Sky", description:"Amazing exploration game with a vast universe to discover. ~18 quintillion planets! *Fair Warning: May run badly on older systems.*", price:"$20-$60", genre:"Exploration, Survival, Sci-Fi", platform:"PC, PS4, PS5, Xbox One, Xbox Series X/S", rating:"8/10"},
+    {id:'2', title:"Terraria", description:"2D sandbox adventure game with mining, crafting, and exploration elements.", price:"$10-$20", genre:"Sandbox, Adventure, Mining", platform:"PC, Mac, Linux, Xbox One, PS4, Switch", rating:"10/10"},
+    {id:'3', title:"Trailmakers", description:"Physics-based vehicle building and racing game with a focus on creativity and destruction.", price:"$7.50-$25", genre:"Physics, Racing, Building", platform:"PC, Mac, Linux", rating:"8/10"},
+    {id:'4', title:"Mech Arena", description:"Fast-paced multiplayer arena combat game with mech customization and intense battles.", price:"Free", genre:"Action, Shooter, Multiplayer", platform:"PC", rating:"6/10"},
+    {id:'5', title:"Grimhook", description:"Fast paced parkour challenge with a unique hook-based movement system.", price:"Free", genre:"Parkour, Challenge", platform:"PC", rating:"8/10"},
+    {id:'6', title:"Hollow Knight", description:"Beautiful 2D metroidvania game with a dark, atmospheric world to explore.", price:"Around $15", genre:"Metroidvania, Adventure, Platformer", platform:"PC, Mac, Linux, Switch", rating:"9/10"},
+    {id:'7', title:"Hollow Knight Silksong", description:"Beautiful 2D metroidvania sequel with a bright world to explore.", price:"Around $15", genre:"Metroidvania, Adventure, Platformer", platform:"PC, Mac, Linux, Switch", rating:"9.5/10"}
+];
 
-            
-            <div class="game">
-                <h3>Terraria</h3>
-                <p>2D sandbox adventure game with mining, crafting, and exploration elements.</p>
-                <p>Price: various, around $10 to $20</p>
-                <p>Genre: Sandbox, Adventure, Mining</p>
-                <p>Platform: PC, Mac, Linux, Xbox One, PlayStation 4, Nintendo Switch</p>
-                <p>rating: 10/10. no notes. Runs on any system, SOO many bosses. always fun even when you die on expert mode skeletron for the 4,403rd time.</p>
-                <img src="" alt="">
-            </div>
+// ----- Load Games -----
+let games = JSON.parse(localStorage.getItem("games"));
+if(!games || games.length===0){ games = defaultGames; localStorage.setItem("games", JSON.stringify(games)); }
+function saveGames(){ localStorage.setItem("games", JSON.stringify(games)); }
 
-            
-            <div class="game">
-                <h3>Trailmakers</h3>
-                <p>Physics-based vehicle building and racing game with a focus on creativity and destruction.</p>
-                <p>Price: various, usually $25, on sale for $7.50 sometimes</p>
-                <p>Genre: Physics, Racing, Building</p>
-                <p>Platform: PC, Mac, Linux</p>
-                <p>rating: 8/10. havn't played it much, but from the little I played, it seems like a fun physics-based game. the controls can be a bit wonky, so watch some tutorials first.</p>
-                <img src="" alt="">
-            </div>
+// ----- Display Games -----
+function showGames(list = games){
+    const area = document.getElementById("games");
+    area.innerHTML = "";
+    if(list.length===0){ area.innerHTML="<p>No games yet.</p>"; return; }
+    list.slice().reverse().forEach(game=>{
+        area.innerHTML+=`
+        <div class="game">
+            <h3>${game.title}</h3>
+            <p>${game.description}<br>Price: ${game.price}<br>Genre: ${game.genre}<br>Platform: ${game.platform}<br>Rating: ${game.rating}</p>
+            ${isAdmin ? `<button data-id="${game.id}" onclick="editGame(this)">Edit</button>
+            <button data-id="${game.id}" onclick="deleteGame(this)">Delete</button>` : ""}
+        </div>`;
+    });
+}
 
-            
-            <div class="game">
-                <h3>Mech Arena</h3>
-                <p>Fast-paced multiplayer arena combat game with mech customization and intense battles.</p>
-                <p>Price: free, pay to win though.</p>
-                <p>Genre: Action, Shooter, Multiplayer</p>
-                <p>Platform: PC</p>
-                <p>rating: 6/10. Fun for competitive multiplayer battles, but can be a bit repetitive after a while. *Fair Warning: Extremely Pay to Win, Past rank III, you will want to uninstall, but keep going because it gets better.*</p>
-                <img src="" alt="">
-            </div>
-            
-            
-           <div class="game">
-                <h3>Grimhook</h3>
-                <p>fast paced parkour challenge with a unique hook-based movement system.</p>
-                <p>Price: free</p>
-                <p>Genre: Parkour, Challenge</p>
-                <p>Platform: PC</p>
-                <p>rating: 8/10. fun, but extremely short. takes less than 30 minutes to beat.</p>
-                <img src="" alt="">
-            </div>
-             
-        
-            <div class="game">
-                <h3>Hollow Knight</h3>
-                <p>Beautiful 2D metroidvania game with a dark, atmospheric world to explore.</p>
-                <p>Price: Various, around $15, but can be on sale. </p>
-                <p>Genre: Metroidvania, Adventure, Platformer</p>
-                <p>Platform: PC, Mac, Linux, Nintendo Switch</p>
-                <p>rating: 9/10. A masterpiece of game design and atmosphere. Highly recommended for fans of challenging platformers. also the bosses are amazing.</p>
-                <img src="" alt="">
-            </div>
+// ----- Add Game -----
+function addGame(){
+    if(!isAdmin) return;
+    const title = document.getElementById("gameTitle").value.trim();
+    const description = document.getElementById("gameDescription").value.trim();
+    const price = document.getElementById("gamePrice").value.trim();
+    const genre = document.getElementById("gameGenre").value.trim();
+    const platform = document.getElementById("gamePlatform").value.trim();
+    const rating = document.getElementById("gameRating").value.trim();
+    if(!title || !description || !price || !genre || !platform || !rating) return;
+    const id = Date.now()+"-"+Math.floor(Math.random()*1000);
+    games.push({id, title, description, price, genre, platform, rating});
+    saveGames();
+    showGames();
+    document.getElementById("gameTitle").value="";
+    document.getElementById("gameDescription").value="";
+    document.getElementById("gamePrice").value="";
+    document.getElementById("gameGenre").value="";
+    document.getElementById("gamePlatform").value="";
+    document.getElementById("gameRating").value="";
+}
 
-            
-            <div class="game">
-                <h3>Hollow Knight Silksong</h3>
-                <p>Beautiful 2D metroidvania sequel with a bright world to explore.</p>
-                <p>Price: Various, around $15, but can be on sale. </p>
-                <p>Genre: Metroidvania, Adventure, Platformer</p>
-                <p>Platform: PC, Mac, Linux, Nintendo Switch</p>
-                <p>rating: 9.5/10. A masterpiece of game design and atmosphere. Highly recommended for fans of challenging platformers. also the bosses are amazing but much harder than the original.</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-             
-            
-           <div class="game">
-                <h3>Filler Text</h3>
-                <p>Filler Text</p>
-                <p>Price: Filler Text</p>
-                <p>Genre: Filler Text</p>
-                <p>Platform: Filler Text</p>
-                <p>rating: Filler Text</p>
-                <img src="" alt="">
-            </div>
-           
-            
+// ----- Delete Game -----
+function deleteGame(button){
+    if(!isAdmin) return;
+    const id = button.getAttribute("data-id");
+    if(confirm("Delete this game?")){
+        games = games.filter(g=>g.id!==id);
+        saveGames();
+        showGames();
+    }
+}
 
+// ----- Edit Game -----
+function editGame(button){
+    if(!isAdmin) return;
+    const id = button.getAttribute("data-id");
+    const game = games.find(g=>g.id===id);
+    if(!game) return;
+    const title = prompt("Edit Game Title:", game.title);
+    const description = prompt("Edit Description:", game.description);
+    const price = prompt("Edit Price:", game.price);
+    const genre = prompt("Edit Genre:", game.genre);
+    const platform = prompt("Edit Platform(s):", game.platform);
+    const rating = prompt("Edit Rating:", game.rating);
+    if(title && description && price && genre && platform && rating){
+        game.title = title;
+        game.description = description;
+        game.price = price;
+        game.genre = genre;
+        game.platform = platform;
+        game.rating = rating;
+        saveGames();
+        showGames();
+    }
+}
 
-           
+// ----- Search -----
+function filterGames(){
+    const term = document.getElementById("searchBar").value.toLowerCase();
+    const filtered = games.filter(g =>
+        g.title.toLowerCase().includes(term) ||
+        g.description.toLowerCase().includes(term) ||
+        g.price.toLowerCase().includes(term) ||
+        g.genre.toLowerCase().includes(term) ||
+        g.platform.toLowerCase().includes(term) ||
+        g.rating.toLowerCase().includes(term)
+    );
+    showGames(filtered);
+}
 
-        </article>
-
-    </div>
-
-    <!-- SEARCH SCRIPT -->
-    <script>
-        function filterGames() {
-            const input = document.getElementById("searchBar").value.toLowerCase();
-            const games = document.getElementsByClassName("game");
-
-            for (let i = 0; i < games.length; i++) {
-                const title = games[i].getElementsByTagName("h3")[0].innerText.toLowerCase();
-                games[i].style.display = title.includes(input) ? "" : "none";
-            }
-        }
-    </script>
+// ----- Initial Display -----
+showGames();
+</script>
 
 </body>
-
 </html>
-
-
-
