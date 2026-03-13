@@ -1,78 +1,199 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <title>Main Page</title>
+<meta charset="UTF-8">
+<title>My Blog</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* Search Bar */
+#searchBar {
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 20px;
+    border: 2px solid black;
+    box-sizing: border-box;
+}
 
-    <style>
-        body {
-            margin: 0;
-            padding: 15px;
-            font-family: "Comic Sans MS", sans-serif;
-            background-image: url("waves.jpg");
-            background-repeat: repeat;
-        }
+/* Navigation Buttons */
+nav {
+    text-align: center;
+    margin-bottom: 25px;
+}
+nav button {
+    margin: 5px;
+}
 
-        nav {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+/* Admin Panel Section */
+#adminPanel input, #adminPanel textarea, #adminPanel button {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+    font-size: 14px;
+    border-radius: 10px;
+    padding: 10px;
+    border: 2px solid gray;
+    box-sizing: border-box;
+}
 
-        .container {
-            max-width: 700px;
-            margin: 0 auto;
-            background-color: rgb(255, 255, 255);
-            padding: 35px;
-            border-radius: 20px;
-            border-color: black;
-            border-width: 2px;
-            border-style: solid;
-        }
-
-        h1 {
-            margin-top: 0;
-        }
-
-        p {
-            line-height: 1.6;
-        }
-
-        img {
-            display: block;
-            margin: 20px 0;
-            border-radius: 20px;
-        }
-
-        button {
-            padding: 10px 16px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 10px;
-        }
-    </style>
+/* Blog Posts */
+.post {
+    border: 1px solid black;
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: white;
+}
+.post small {
+    color: gray;
+    display: block;
+    margin-bottom: 10px;
+}
+</style>
 </head>
-
 <body>
 
-    <nav>
-        <a href="index.html"><button>Main Page</button></a>
-        <a href="Blog.html"><button>Blog</button></a>
-        <a href="vgr.html"><button>Video Game Recommendations</button></a>
-    </nav>
+<!-- Navigation -->
+<nav>
+    <a href="index.html"><button>Main Page</button></a>
+    <a href="Blog.html"><button>Blog</button></a>
+    <a href="vgr.html"><button>Video Game Recommendations</button></a>
+</nav>
 
-    <div class="container">
+<div class="container">
+    <h2>My Blog</h2>
 
+    <!-- Admin Panel -->
+    <div id="adminPanel" style="display:none;">
+        <h3>Admin Panel</h3>
+        <input id="title" placeholder="Post Title">
+        <textarea id="content" placeholder="Write your post..."></textarea>
+        <button onclick="publish()">Publish Post</button>
+        <hr>
+    </div>
 
+    <!-- Search Bar -->
+    <input type="text" id="searchBar" placeholder="Search posts..." onkeyup="searchPosts()">
 
-        <header>
-            <h2>
-                <center>Hi, Welcome to My Blog!</center>
-            </h2>
-        </header>
+    <!-- Posts -->
+    <div id="posts"></div>
+</div>
+
+<script>
+// ----- Admin Login for Privileges -----
+let isAdmin = false;
+function askAdminLogin() {
+    const pass = prompt("Enter admin password for editing privileges:");
+    if(pass === "203118") {
+        isAdmin = true;
+        document.getElementById("adminPanel").style.display = "block";
+        alert("Admin privileges granted!");
+    } else {
+        alert("Reverting to guest mode. You can view posts but cannot edit.");
+    }
+}
+
+// Ask admin login on page load
+askAdminLogin();
+
+// ----- Load Posts -----
+let posts = JSON.parse(localStorage.getItem("posts")) || [];
+
+// ----- Save Posts -----
+function save() {
+    localStorage.setItem("posts", JSON.stringify(posts));
+}
+
+// ----- Generate Unique ID -----
+function generateId() {
+    return Date.now() + "-" + Math.floor(Math.random() * 100000);
+}
+
+// ----- Display Posts -----
+function showPosts(list = posts){
+    const area = document.getElementById("posts");
+    area.innerHTML = "";
+
+    if(list.length === 0){
+        area.innerHTML = "<p>No posts yet.</p>";
+        return;
+    }
+
+    list.slice().reverse().forEach(post => {
+        area.innerHTML += `
+        <div class="post">
+            <h3>${post.title}</h3>
+            <small>${post.date || ""}</small>
+            <p>${post.content}</p>
+            ${isAdmin ? `
+                <button data-id="${post.id}" onclick="editPost(this)">Edit</button>
+                <button data-id="${post.id}" onclick="deletePost(this)">Delete</button>
+            ` : ""}
+        </div>`;
+    });
+}
+
+// ----- Publish Post -----
+function publish(){
+    if(!isAdmin) return;
+    const title = document.getElementById("title").value.trim();
+    const content = document.getElementById("content").value.trim();
+    if(!title || !content) return;
+
+    const date = new Date().toLocaleString();
+    const contentHtml = content.replace(/\n/g, "<br>");
+    const id = generateId();
+    posts.push({id, title, content: contentHtml, date});
+    save();
+    showPosts();
+
+    document.getElementById("title").value = "";
+    document.getElementById("content").value = "";
+}
+
+// ----- Delete Post -----
+function deletePost(button){
+    if(!isAdmin) return;
+    const id = button.getAttribute("data-id");
+    if(confirm("Delete this post?")){
+        posts = posts.filter(p => p.id !== id);
+        save();
+        showPosts();
+    }
+}
+
+// ----- Edit Post -----
+function editPost(button){
+    if(!isAdmin) return;
+    const id = button.getAttribute("data-id");
+    const post = posts.find(p => p.id === id);
+    if(!post) return;
+
+    const newTitle = prompt("Edit title:", post.title);
+    let newContent = prompt("Edit content (line breaks will be preserved):", post.content.replace(/<br>/g,"\n"));
+    if(newTitle !== null && newContent !== null){
+        post.title = newTitle;
+        post.content = newContent.replace(/\n/g,"<br>");
+        save();
+        showPosts();
+    }
+}
+
+// ----- Search Posts -----
+function searchPosts(){
+    const term = document.getElementById("searchBar").value.toLowerCase();
+    const filtered = posts.filter(p =>
+        p.title.toLowerCase().includes(term) ||
+        p.content.toLowerCase().includes(term)
+    );
+    showPosts(filtered);
+}
+
+// ----- Initial Display -----
+showPosts();
+</script>
+
 </body>
 </html>
-        <section>
-            <p>Welcome to my blog! Here, I will be sharing my thoughts on various topics that interest me, including technology, gaming, and personal developments. </p>
-
-
